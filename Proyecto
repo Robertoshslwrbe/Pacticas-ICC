@@ -1,0 +1,275 @@
+/**
+ * Los servicios que debe ofrecer un Recipiente.
+ */
+public interface ServiciosRecipiente {
+
+    /**
+     * Calcula y devuelve la cantidad máxima de líquido que cabe en el recipiente.
+     * @return La capacidad total.
+     */
+    public double capacidad();
+
+    /**
+     * Calcula y devuelve la diferencia entre la capacidad total y la cantidad actual del recipiente.
+     * @return La capacidad restante.
+     */
+    public double capacidadRestante();
+
+    /**
+     * Indica si el recipiente está vacío, es decir, la cantidad de líquido que contiene es cero.
+     * @return true si está vacío, false en otro caso.
+     */
+    public boolean estaVacio();
+
+    /**
+     * Indica si el recipiente está lleno, es decir, la cantidad de líquido que contiene es igual a la de su capacidad.
+     * @return true si está lleno, false en otro caso.
+     */
+    public boolean estaLleno();
+
+    /**
+     * Agrega una nueva cantidad de líquido al recipiente, respetando la capacidad máxima del mismo.
+     * Si no cabe todo el líquido, devuelve el excedente.
+     * @param cantidad La cantidad de líquido a agregar.
+     * @return La cantidad excedente. Puede ser cero si cabía todo.
+     */
+    public double rellena(double cantidad);
+
+    /**
+     * Resetea la cantidad actual a cero.
+     * @return La cantidad de líquido que poseía.
+     */
+    public double vacia();
+
+    /**
+     * Vierte el contenido del recipiente en otro respetando su capacidad máxima.
+     * Si hay excedente, se guarda en el recipiente invocante.
+     * @param otro El recipiente donde se verterá el líquido.
+     */
+    public void vierte(Recipiente otro);
+
+    /**
+     * Indica si el recipiente tiene exactamente las mismas dimensiones que otro.
+     * Solo se revisan las dimensiones, la cantidad de líquido puede variar.
+     * @param otro El recipiente a comparar.
+     * @return true si tienen las mismas dimensiones, false en otro caso.
+     */
+    public boolean mismasDimensiones(Recipiente otro);
+
+    /**
+     * Indica si el recipiente tiene exactamente la misma capacidad total que otro.
+     * Solo se revisa la capacidad total, las dimensiones pueden variar.
+     * @param otro El recipiente a comparar.
+     * @return true si tienen la misma capacidad, false en otro caso.
+     */
+    public boolean mismaCapacidad(Recipiente otro);
+
+    /**
+     * Indica si el recipiente tiene mayor cantidad actual de líquido que otro.
+     * @param otro El recipiente a comparar.
+     * @return true si tiene mayor cantidad, false en otro caso.
+     */
+    public boolean contieneMas(Recipiente otro);
+
+    /**
+     * Indica si el recipiente tiene mayor capacidad restante que otro.
+     * @param otro El recipiente a comparar.
+     * @return true si tiene mayor capacidad restante, false en otro caso.
+     */
+    public boolean cabeMas(Recipiente otro);
+
+    /**
+     * Crea un nuevo recipiente vacío cuya capacidad total es igual a la cantidad actual del recipiente invocante.
+     * Por ejemplo, a partir de un recipiente A de altura h y radio r que está lleno solo hasta la mitad,
+     * se podría generar un recipiente vacío B de altura h/2 y radio r.
+     * @return Un nuevo recipiente vacío con la capacidad indicada.
+     */
+    public Recipiente creaContenedorJusto();
+
+    /**
+     * Devuelve una cadena que exhiba con buen formato las dimensiones, capacidad y cantidad actual del recipiente.
+     * @return La cadena correspondiente al recipiente.
+     */
+    public String muestra();
+}
+/**
+ * Clase que representa un recipiente cilíndrico que almacena líquidos.
+ */
+public class Recipiente implements ServiciosRecipiente {
+    // Atributos: altura (cm), radio (cm) y cantidadActual (cm³).
+    private double altura;
+    private double radio;
+    private double cantidadActual;
+
+    /**
+     * Constructor que recibe altura, radio y cantidad inicial de líquido.
+     * Se asegura de que la cantidad se encuentre entre 0 y la capacidad total.
+     */
+    public Recipiente(double altura, double radio, double cantidadActual) {
+        this.altura = altura;
+        this.radio = radio;
+        double capacidad = capacidad();
+        if (cantidadActual < 0) {
+            this.cantidadActual = 0;
+        } else if (cantidadActual > capacidad) {
+            this.cantidadActual = capacidad;
+        } else {
+            this.cantidadActual = cantidadActual;
+        }
+    }
+
+    /**
+     * Constructor que crea un recipiente vacío con altura y radio.
+     */
+    public Recipiente(double altura, double radio) {
+        this(altura, radio, 0);
+    }
+
+    // Métodos de acceso
+    public double getAltura() { return altura; }
+    public double getRadio() { return radio; }
+    public double getCantidadActual() { return cantidadActual; }
+
+    @Override
+    public double capacidad() {
+        return Math.PI * radio * radio * altura;
+    }
+
+    @Override
+    public double capacidadRestante() {
+        return capacidad() - cantidadActual;
+    }
+
+    @Override
+    public boolean estaVacio() {
+        return cantidadActual == 0;
+    }
+
+    @Override
+    public boolean estaLleno() {
+        // Se utiliza una tolerancia para la comparación de doubles.
+        return Math.abs(cantidadActual - capacidad()) < 1e-6;
+    }
+
+    @Override
+    public double rellena(double cantidad) {
+        double espacio = capacidadRestante();
+        double exceso = 0;
+        if (cantidad <= espacio) {
+            cantidadActual += cantidad;
+        } else {
+            cantidadActual = capacidad();
+            exceso = cantidad - espacio;
+        }
+        return exceso;
+    }
+
+    @Override
+    public double vacia() {
+        double temp = cantidadActual;
+        cantidadActual = 0;
+        return temp;
+    }
+
+    @Override
+    public void vierte(Recipiente otro) {
+        // Determina cuánto líquido puede transferirse al otro recipiente.
+        double espacioEnOtro = otro.capacidadRestante();
+        double cantidadATransferir = Math.min(cantidadActual, espacioEnOtro);
+        // Vierte el líquido y actualiza la cantidad.
+        otro.rellena(cantidadATransferir);
+        cantidadActual -= cantidadATransferir;
+    }
+
+    @Override
+    public boolean mismasDimensiones(Recipiente otro) {
+        return Math.abs(this.altura - otro.altura) < 1e-6 &&
+               Math.abs(this.radio - otro.radio) < 1e-6;
+    }
+
+    @Override
+    public boolean mismaCapacidad(Recipiente otro) {
+        return Math.abs(this.capacidad() - otro.capacidad()) < 1e-6;
+    }
+
+    @Override
+    public boolean contieneMas(Recipiente otro) {
+        return this.cantidadActual > otro.cantidadActual;
+    }
+
+    @Override
+    public boolean cabeMas(Recipiente otro) {
+        return this.capacidadRestante() > otro.capacidadRestante();
+    }
+
+    @Override
+    public Recipiente creaContenedorJusto() {
+        // Calcula la altura necesaria para que un recipiente con el mismo radio tenga
+        // una capacidad igual a la cantidad actual.
+        double newAltura = cantidadActual / (Math.PI * radio * radio);
+        // Crea y retorna un nuevo recipiente vacío.
+        return new Recipiente(newAltura, radio, 0);
+    }
+
+    @Override
+    public String muestra() {
+        return String.format("Recipiente: Altura=%.2f cm, Radio=%.2f cm, Capacidad=%.2f cm³, Contenido=%.2f cm³",
+                altura, radio, capacidad(), cantidadActual);
+    }
+}
+/**
+ * Clase para probar las funcionalidades de la clase Recipiente.
+ */
+public class ProyectoRecipientes {
+    public static void main(String[] args) {
+        // Crear recipientes para las pruebas
+        Recipiente rec1 = new Recipiente(10, 5, 0);    // Recipiente vacío
+        Recipiente rec2 = new Recipiente(8, 4, 50);     // Recipiente con cantidad inicial
+        System.out.println("Recipiente 1: " + rec1.muestra());
+        System.out.println("Recipiente 2: " + rec2.muestra());
+        
+        // Probar capacidad y capacidadRestante
+        System.out.printf("Capacidad de rec1: %.2f cm³%n", rec1.capacidad());
+        System.out.printf("Capacidad restante de rec2: %.2f cm³%n", rec2.capacidadRestante());
+        
+        // Probar el método rellena
+        double exceso = rec1.rellena(500); // Se intenta llenar rec1
+        System.out.println("\nDespués de rellenar rec1 con 500 cm³:");
+        System.out.println(rec1.muestra());
+        if (exceso > 0) {
+            System.out.printf("Exceso que no entró: %.2f cm³%n", exceso);
+        }
+        
+        // Probar métodos estaVacio y estaLleno
+        System.out.println("\n¿rec1 está vacío? " + rec1.estaVacio());
+        System.out.println("¿rec1 está lleno? " + rec1.estaLleno());
+        
+        // Probar el método vacia
+        double contenidoVaciado = rec1.vacia();
+        System.out.printf("\nSe vació rec1 y se obtuvo: %.2f cm³%n", contenidoVaciado);
+        System.out.println("Recipiente 1 después de vaciar: " + rec1.muestra());
+        
+        // Rellenar rec1 parcialmente y probar el método vierte
+        rec1.rellena(200);
+        System.out.println("\nRecipiente 1 rellenado con 200 cm³: " + rec1.muestra());
+        System.out.println("Recipiente 2 antes de verter: " + rec2.muestra());
+        rec1.vierte(rec2);
+        System.out.println("\nDespués de verter rec1 en rec2:");
+        System.out.println("Recipiente 1: " + rec1.muestra());
+        System.out.println("Recipiente 2: " + rec2.muestra());
+        
+        // Probar comparaciones entre recipientes
+        System.out.println("\n¿Recipiente 1 y Recipiente 2 tienen las mismas dimensiones? " + rec1.mismasDimensiones(rec2));
+        System.out.println("¿Recipiente 1 y Recipiente 2 tienen la misma capacidad? " + rec1.mismaCapacidad(rec2));
+        System.out.println("¿Recipiente 1 contiene más líquido que Recipiente 2? " + rec1.contieneMas(rec2));
+        System.out.println("¿Recipiente 1 cabe más líquido que Recipiente 2? " + rec1.cabeMas(rec2));
+        
+        // Probar el método creaContenedorjusto
+        // Vaciar y rellenar rec2 para tener un valor concreto en cantidadActual
+        rec2.vacia();
+        rec2.rellena(30); // rec2 ahora contiene 30 cm³
+        System.out.println("\nRecipiente 2 antes de crear contenedor justo: " + rec2.muestra());
+        Recipiente contenedorJusto = rec2.creaContenedorJusto();
+        System.out.println("Nuevo contenedor creado a partir de rec2: " + contenedorJusto.muestra());
+    }
+}
